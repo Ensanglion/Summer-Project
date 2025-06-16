@@ -19,6 +19,7 @@ print(f"\nModel coefficients:")
 print(f"Slope: {model.coef_[0]:.4f}")
 print(f"Intercept: {model.intercept_:.4f}")
 print(f"R-squared score: {model.score(X, y):.4f}")
+print(f"\nLinear equation: Fat = {model.coef_[0]:.4f} * Calories {'-' if model.intercept_ < 0 else '+'} {abs(model.intercept_):.4f}")
 
 # Create scatter plot with regression line
 plt.figure(figsize=(10, 6))
@@ -30,24 +31,3 @@ plt.title('Energy vs Total Fat with Linear Regression (Calories ≤ 700)')
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.show()
-
-# Test some example predictions
-test_calories = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650]
-print("\nPredictions and actual values:")
-for calories in test_calories:
-    # Create a proper DataFrame for prediction
-    test_df = pd.DataFrame([[calories]], columns=['Energy (kCal)'])
-    predicted_fat = model.predict(test_df)[0]
-    print(f"\nFor {calories} calories:")
-    print(f"Predicted fat: {predicted_fat:.2f} grams")
-    
-    # Find actual values within ±50 calories
-    actual_values = filtered_df[
-        (filtered_df['Energy (kCal)'] >= calories - 50) & 
-        (filtered_df['Energy (kCal)'] <= calories + 50)
-    ]
-    if not actual_values.empty:
-        avg_fat = actual_values['Total Fat (g)'].mean()
-        print(f"Average actual fat in this range: {avg_fat:.2f} grams")
-    else:
-        print("No actual values found in this range")
