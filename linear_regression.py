@@ -1,7 +1,5 @@
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-import matplotlib.pyplot as plt # just here to visualize the data
-import numpy as np
 
 # Load the dataset, then intialize and train the model
 def load_model():

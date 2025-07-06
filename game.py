@@ -1,20 +1,22 @@
 import pygame
 import random
-import time
 import csv
 from classes import *
+from PIL import Image
 
 # General game setup -----------------------------------------------------------
 
 pygame.init()
-pygame.mixer.init()  # Initialize the mixer for audio
-WIDTH, HEIGHT = 1440, 900
+pygame.mixer.init()  # enables sound
+
+screen_info = pygame.display.Info() # player's screen size
+WIDTH, HEIGHT = screen_info.current_w, screen_info.current_h
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Catch the Healthy Food")
 
 FPS = 60
 FONT = pygame.font.SysFont("arial", 24)
-HUD_FONT = pygame.font.SysFont("arial", 48)  # Twice the size for HUD text
+HUD_FONT = pygame.font.SysFont("arial", 48)
 MENU_FONT = pygame.font.SysFont("arial", 64)
 
 
@@ -27,21 +29,20 @@ def load_and_scale_sprite(path, target_width, target_height):
     original = pygame.image.load(path)
     orig_width, orig_height = original.get_size()
     
-    # Calculate scale to fit within target dimensions
     scale_x = target_width / orig_width
     scale_y = target_height / orig_height
-    scale = min(scale_x, scale_y)  # Use the smaller scale to maintain aspect ratio
+    scale = min(scale_x, scale_y)
     
     new_width = int(orig_width * scale)
     new_height = int(orig_height * scale)
     
-    # Scale the sprite
+    # scale the sprite
     scaled = pygame.transform.scale(original, (new_width, new_height))
     
-    # Create a new surface with target dimensions and transparent background
+    # create a new surface with target dimensions and transparent background
     final_surface = pygame.Surface((target_width, target_height), pygame.SRCALPHA)
     
-    # Center the scaled sprite on the final surface
+    # center the scaled sprite on the final surface
     x_offset = (target_width - new_width) // 2
     y_offset = (target_height - new_height) // 2
     final_surface.blit(scaled, (x_offset, y_offset))
@@ -61,18 +62,25 @@ PLAYER_SPRITES = {
     "throw": load_and_scale_sprite("new_sprites\\spr_chefs_kris_throw\\spr_chefs_kris_throw_1.png", PLAYER_WIDTH, PLAYER_HEIGHT),
 }
 
+# Customer sprites
 CUSTOMER_SPRITES = [
     load_and_scale_sprite("new_sprites\\spr_shadowman_run3\\spr_shadowman_run3_1.png", 100, 120),
     load_and_scale_sprite("new_sprites\\spr_shadowman_run3\\spr_shadowman_run3_0.png", 100, 120),
 ]
+
+# Fireball sprite and dimnensions
 FIREBALL_SPRITE = load_and_scale_sprite(
     "new_sprites\\spr_kitchen_fire_ball\\spr_kitchen_fire_ball_1.png",
     40, 40
 )
+
+# Food warning sprite and dimensions
 FOOD_WARNING_SPRITE = pygame.transform.scale(
     pygame.image.load("new_sprites\\spr_chefs_foodnotice\\spr_chefs_foodnotice_0.png"),
-    (50, 50)  # Even smaller size for the warning
+    (50, 50) 
 )
+
+# scoreboard sprite and dimensions
 SCOREBOARD_SPRITE = pygame.transform.scale(
     pygame.image.load("new_sprites\\spr_chefs_hudscreen.png"), (250, 120)
 )
@@ -89,11 +97,13 @@ MISSED_FOOD_FIREBALL_DURATION = 1500
 
 # Helper functions -----------------------------------------------------------
 
+# ensures the text is centered on the screen
 def draw_text_centered(win, text, font, color, y):
     rendered = font.render(text, True, color)
     rect = rendered.get_rect(center=(WIDTH // 2, y))
     win.blit(rendered, rect)
 
+# literally just creates a button
 def draw_button(win, text, font, color, hover_color, rect, mouse_pos, mouse_click):
     is_hovered = rect.collidepoint(mouse_pos)
     pygame.draw.rect(win, hover_color if is_hovered else color, rect, border_radius=12)
@@ -104,6 +114,48 @@ def draw_button(win, text, font, color, hover_color, rect, mouse_pos, mouse_clic
  
 
 # Helper Classes -----------------------------------------------------------
+
+class GIFAnimation:
+    def __init__(self, gif_path, target_width, target_height):
+        self.frames = []
+        self.current_frame = 0
+        self.frame_delay = 12  # milliseconds between frames (20 FPS - much faster!)
+        self.last_frame_time = 0
+        
+        try:
+            # Open the GIF and extract frames
+            gif = Image.open(gif_path)
+            frame_count = 0
+            
+            while True:
+                # Convert PIL image to pygame surface
+                frame_surface = pygame.image.fromstring(gif.convert('RGBA').tobytes(), gif.size, 'RGBA')
+                
+                # Scale the frame to target size
+                scaled_frame = pygame.transform.scale(frame_surface, (target_width, target_height))
+                self.frames.append(scaled_frame)
+                
+                frame_count += 1
+                gif.seek(frame_count)
+        except EOFError:
+            pass  # End of GIF
+        except Exception as e:
+            print(f"Error loading GIF {gif_path}: {e}")
+            # Create a fallback surface
+            fallback = pygame.Surface((target_width, target_height), pygame.SRCALPHA)
+            fallback.fill((255, 0, 255))  # Magenta for missing GIF
+            self.frames.append(fallback)
+    
+    def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_frame_time > self.frame_delay and len(self.frames) > 1:
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.last_frame_time = now
+    
+    def get_current_frame(self):
+        if self.frames:
+            return self.frames[self.current_frame]
+        return None
 
 class Player:
     def __init__(self):
@@ -165,7 +217,7 @@ class Player:
             self.state = "normal"
             self.threw_this_cycle = False  # Reset flag when throwing ends
 
-
+    # switches between sprites based on the player's state
     def get_current_sprite(self):
         if self.state == "hit":
             return PLAYER_SPRITES["hit"]
@@ -199,8 +251,10 @@ class Player:
 
 class Customer:
     def __init__(self):
-        self.y = GROUND_Y + 200  # slightly below player ground line
-        self.x = WIDTH + 50  # spawn off right edge
+        # slightly below player ground line
+        self.y = GROUND_Y + 200  
+        # spawn off-screen
+        self.x = WIDTH + 50  
         self.speed = 3
         self.sprite_index = 0
         self.last_sprite_switch = pygame.time.get_ticks()
@@ -209,6 +263,7 @@ class Customer:
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
         self.alive = True
 
+    # moves the customer to the left and switches between sprites
     def update(self):
         self.x -= self.speed
         now = pygame.time.get_ticks()
@@ -223,7 +278,7 @@ class Customer:
         sprite = CUSTOMER_SPRITES[self.sprite_index]
         win.blit(sprite, (self.x, self.y))
 
-
+# fireball class (only for the ones that are created when food hits the ground) because something didn't work when there was just one class
 class Fireball:
     def __init__(self, x, y, direction, is_obstacle=True):
         self.x = x
@@ -266,13 +321,13 @@ class Fireball:
         if self.visible:
             win.blit(FIREBALL_SPRITE, (self.x, self.y))
 
-
+# obstacle fireball class (only for the ones that are moving from side to side)
 class ObstacleFireball:
     def __init__(self, x, y, direction):
         self.x = x
         self.y = y
         self.speed = 3
-        self.direction = direction  # either "left" or "right"
+        self.direction = direction  # randomly chooses either "left" or "right"
         self.width = 40
         self.height = 40
         self.hitbox = pygame.Rect(self.x + 10, self.y + 10, 20, 20)
@@ -291,7 +346,7 @@ class ObstacleFireball:
     def draw(self, win):
         win.blit(FIREBALL_SPRITE, (self.x, self.y))
 
-
+# thrown food logic 
 class ThrownFood:
     def __init__(self, food, x, y):
         self.food = food
@@ -315,7 +370,7 @@ class ThrownFood:
 
 
 # All game parts (menu, game, controls, about, leaderboard) ---------------------------------------------
-
+# instructions screen 
 def show_instructions():
     running = True
     while running:
@@ -333,14 +388,12 @@ def show_instructions():
                 exit()
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
-
+# about screen 
 def show_about():
-    # Load the data plot image
-    try:
+    try: 
         plot_img = pygame.image.load("data_plot_high_res.png")
-        # Scale the plot to maintain quality while fitting on screen
         plot_img = pygame.transform.scale(plot_img, (800, 600))
-    except pygame.error as e:
+    except pygame.error as e: # debug print
         print(f"Could not load data plot: {e}")
         plot_img = None
     
@@ -348,25 +401,27 @@ def show_about():
     while running:
         WIN.blit(BACKGROUND_IMG, (0, 0))
         
-        # Draw title at the top
         draw_text_centered(WIN, "About", MENU_FONT, (255, 255, 255), 80)
         
-        # Draw the data plot on the right side
         if plot_img:
             plot_rect = plot_img.get_rect(center=(WIDTH * 0.7, HEIGHT * 0.55))
             WIN.blit(plot_img, plot_rect)
         
-        # Draw text on the left side
-        left_text_x = WIDTH * 0.25  # 25% from left edge
+        left_text_x = WIDTH * 0.25  
         
-        # Helper function to draw left-aligned text
+        # helper function to draw text on the left side
         def draw_left_text(text, font, color, y):
             rendered = font.render(text, True, color)
             WIN.blit(rendered, (left_text_x - rendered.get_width()//2, y))
         
+        def draw_left_text_bold(text, font, color, y):
+            bold_font = pygame.font.SysFont("arial", 24, bold=True)
+            rendered = bold_font.render(text, True, color)
+            WIN.blit(rendered, (left_text_x - rendered.get_width()//2, y))
+        
         # Text content on the left
-        # First line positioned further right
-        first_line_x = WIDTH * 0.45  # 45% from left edge for first line only
+        first_line_x = WIDTH * 0.45  # first line is further to the right to align with the image better
+        last_lines_x = WIDTH * 0.225 # last lines closer to the left side
         first_line_text = "The game has different kinds of food with random calories assigned. Using a dataset of foods, we found a linear relation:"
         first_line_rendered = FONT.render(first_line_text, True, (0, 0, 0))
         WIN.blit(first_line_rendered, (first_line_x - first_line_rendered.get_width()//2, 150))
@@ -374,11 +429,20 @@ def show_about():
         draw_left_text("Linear relation equation:", FONT, (0, 0, 0), 210)
         draw_left_text("Total Fat (g) = 0.0448 × Energy (kCal) - 2.1217", FONT, (0, 0, 0), 240)
         draw_left_text("", FONT, (0, 0, 0), 270)  # Spacing
-        draw_left_text("Healthy food is defined as food with less than 20g of fat.", FONT, (0, 0, 0), 300)
-        draw_left_text("Your goal is to catch healthy food and throw it at the customers.", FONT, (0, 0, 0), 615)
-        draw_left_text("Avoid unhealthy food and fireballs!", FONT, (0, 0, 0), 645)
+        draw_left_text("Healthy food is defined as food with less than 20g of fat.", FONT, (0, 0, 0), 300)    
+        # last 2 lines are bolded and closer to the left side, split around "and" to avoid background
+        last_line1_part1 = "Your goal is to catch healthy food,"
+        last_line1_part2 = "then throw it at the customers"
+        last_line2_text = "Avoid unhealthy food and fireballs!"   
+             
+        part1_1 = pygame.font.SysFont("arial", 24, bold=True).render(last_line1_part1, True, (0, 0, 0))
+        part1_2 = pygame.font.SysFont("arial", 24, bold=True).render(last_line1_part2, True, (0, 0, 0))
+        last_line2_rendered = pygame.font.SysFont("arial", 24, bold=True).render(last_line2_text, True, (0, 0, 0))
+
+        WIN.blit(part1_1, (last_lines_x - part1_1.get_width()//2 - 160, 570))  
+        WIN.blit(part1_2, (last_lines_x - part1_2.get_width()//2 + 190, 570)) 
+        WIN.blit(last_line2_rendered, (last_lines_x - last_line2_rendered.get_width()//2, 605))  
         
-        # Return instruction at bottom
         draw_text_centered(WIN, "ESC to return", FONT, (200, 200, 200), 850)
         pygame.display.update()
         for event in pygame.event.get():
@@ -388,8 +452,8 @@ def show_about():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
 
+# game end screen where the player enters their name to save their score to the leaderboard
 def show_game_over_screen(final_score):
-    """Show game over screen and get player name for leaderboard"""
     player_name = ""
     input_active = True
     
@@ -397,30 +461,24 @@ def show_game_over_screen(final_score):
     while running:
         WIN.blit(BACKGROUND_IMG, (0, 0))
         
-        # Draw semi-transparent overlay
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         pygame.draw.rect(overlay, (0, 0, 0, 128), (0, 0, WIDTH, HEIGHT))
         WIN.blit(overlay, (0, 0))
         
-        # Draw game over title
         draw_text_centered(WIN, "GAME OVER", MENU_FONT, (255, 255, 255), 200)
         
-        # Draw final score
-        draw_text_centered(WIN, f"Your Score: {final_score}", HUD_FONT, (255, 255, 255), 300)
+        draw_text_centered(WIN, f"Your Score: {final_score}", HUD_FONT, (255, 255, 255), 300) # final score
         
-        # Draw input prompt
         draw_text_centered(WIN, "Enter your name:", FONT, (255, 255, 255), 400)
         
-        # Draw input box
-        input_rect = pygame.Rect(WIDTH//2 - 150, 430, 300, 40)
+        input_rect = pygame.Rect(WIDTH//2 - 150, 430, 300, 40) # input box
         pygame.draw.rect(WIN, (255, 255, 255), input_rect, 2)
         pygame.draw.rect(WIN, (50, 50, 50), input_rect)
         
-        # Draw player name text
+        # player input text
         name_surface = FONT.render(player_name, True, (255, 255, 255))
         WIN.blit(name_surface, (input_rect.x + 10, input_rect.y + 10))
         
-        # Draw instruction
         draw_text_centered(WIN, "Press ENTER to save score", FONT, (200, 200, 200), 500)
         
         pygame.display.update()
@@ -431,13 +489,12 @@ def show_game_over_screen(final_score):
                 exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and player_name.strip():
-                    # Save score to leaderboard
                     save_score_to_leaderboard(player_name.strip(), final_score)
                     running = False
                     # Change music back to menu theme
                     try:
                         pygame.mixer.music.load("silly_menu.mp3")
-                        pygame.mixer.music.play(-1)  # -1 means loop indefinitely
+                        pygame.mixer.music.play(-1)
                     except pygame.error as e:
                         print(f"Could not load menu music: {e}")
                     return  # Return to main menu instead of quitting
@@ -446,21 +503,19 @@ def show_game_over_screen(final_score):
                 elif event.unicode.isprintable() and len(player_name) < 20:
                     player_name += event.unicode
 
+# saves the player's name and score to the leaderboard
 def save_score_to_leaderboard(name, score):
-    """Save player name and score to leaderboard.csv"""
     try:
-        # Read existing scores
         scores = []
         try:
             with open("leaderboard.csv", newline='', mode='r') as file:
                 reader = csv.reader(file)
-                # Skip header row if it exists
+                # Skip header row 
                 header = next(reader, None)
                 if header and header[0] == "Name":
-                    # File has header, read all data rows
+                    
                     scores = list(reader)
-                else:
-                    # No header, treat first row as data
+                else: # for debug purposes, in case the file doesn't have a header
                     if header:
                         scores = [header]
                     scores.extend(list(reader))
@@ -470,40 +525,51 @@ def save_score_to_leaderboard(name, score):
         # Add new score
         scores.append([name, str(score)])
         
-        # Sort by score (descending) and keep top 10
-        scores.sort(key=lambda row: int(row[1]), reverse=True)
-        scores = scores[:10]
+        # Sort by score (descending) and keep top 5
+        scores.sort(key=lambda row: int(row[1]), reverse=True) # Assaf learned what a lambda function is!!!
+        scores = scores[:5]
         
-        # Write back to file with header
         with open("leaderboard.csv", newline='', mode='w') as file:
             writer = csv.writer(file)
-            writer.writerow(["Name", "Score"])  # Write header
+            writer.writerow(["Name", "Score"]) 
             writer.writerows(scores)
             
     except Exception as e:
         print(f"Error saving score: {e}")
 
+# leaderboard screen
 def show_leaderboard():
     scores = []
     try:
         with open("leaderboard.csv", newline='') as file:
             reader = csv.reader(file)
-            # Skip header row if it exists
             header = next(reader, None)
             if header and header[0] == "Name":
-                # File has header, read all data rows
                 scores = list(reader)
             else:
-                # No header, treat first row as data
                 if header:
                     scores = [header]
                 scores.extend(list(reader))
     except FileNotFoundError:
         pass
 
+    # Load cane dance GIFs (left and right)
+    cane_gif_left = GIFAnimation("new_sprites\\spr_tenna_dance_cane.gif", 300, 300)
+    cane_gif_right = GIFAnimation("new_sprites\\spr_tenna_dance_cane.gif", 300, 300)
+
     running = True
     while running:
         WIN.blit(BACKGROUND_IMG, (0, 0))
+        
+        # Update and draw cane dance GIFs (left and right)
+        cane_gif_left.update()
+        cane_gif_right.update()
+        cane_frame_left = cane_gif_left.get_current_frame()
+        cane_frame_right = cane_gif_right.get_current_frame()
+        if cane_frame_left:
+            WIN.blit(cane_frame_left, (100, HEIGHT//2 - 150))  # Left side of screen
+        if cane_frame_right:
+            WIN.blit(cane_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  # Right side of screen
         draw_text_centered(WIN, "Leaderboard", MENU_FONT, (255, 255, 255), 80)
         
         if scores:
@@ -522,20 +588,19 @@ def show_leaderboard():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
 
-
+# actual game loop
 def run_game():
     clock = pygame.time.Clock()
-
-    # Load and play background music
+    # play background music
     try:
         pygame.mixer.music.load("game_active.mp3")
-        pygame.mixer.music.play(-1)  # -1 means loop indefinitely
-        print("Music loaded and playing!")
-    except pygame.error as e:
+        pygame.mixer.music.play(-1) 
+    except pygame.error as e: # debug print
         print(f"Could not load music: {e}")
+
     player = Player()
     score = 0
-    timer = 90  # seconds
+    timer = 90 
     start_time = pygame.time.get_ticks()
 
     current_food = None
@@ -545,9 +610,9 @@ def run_game():
     food_speed = 4
     food_spawn_time = 0
     food_warning_visible = False
-    food_warning_x = 0  # Track warning x position
+    food_warning_x = 0  # track warning x position (used to spawn food later)
     obstacle_warning_visible = False
-    obstacle_warning_side = "left"  # Track which side obstacle will spawn
+    obstacle_warning_side = "left" 
     obstacle_warning_time = 0
 
     customers = []
@@ -564,91 +629,85 @@ def run_game():
         clock.tick(FPS)
         now = pygame.time.get_ticks()
 
-        # Background
         WIN.blit(BACKGROUND_IMG, (0, 0))
 
-        # Draw HUD sprite in center (after background, before other elements)
-        hud_x = WIDTH // 2 - 225  # Move slightly to the left
-        hud_y = 120  # Move lower
-        # Scale the HUD sprite to be larger (250x120 -> 450x220)
+        hud_x = WIDTH // 2 - 225  
+        hud_y = 120  
         scaled_hud = pygame.transform.scale(SCOREBOARD_SPRITE, (450, 220))
         WIN.blit(scaled_hud, (hud_x, hud_y))
 
-        # Draw score text on HUD
-        score_label = HUD_FONT.render("SCORE:", True, (255, 255, 255))  # White text
-        score_value = HUD_FONT.render(str(score), True, (255, 255, 255))  # White text
+        score_label = HUD_FONT.render("SCORE:", True, (255, 255, 255)) 
+        score_value = HUD_FONT.render(str(score), True, (255, 255, 255)) 
         
-        # Center text on scaled HUD sprite (450 width)
         label_x = hud_x + (450 - score_label.get_width()) // 2
-        label_y = hud_y + 60  # Moved lower to avoid overlap with timer
+        label_y = hud_y + 60 
         value_x = hud_x + (450 - score_value.get_width()) // 2
-        value_y = hud_y + 120  # Moved lower to avoid overlap with timer
+        value_y = hud_y + 120 
         
         WIN.blit(score_label, (label_x, label_y))
         WIN.blit(score_value, (value_x, value_y))
 
-        # Events
+        # events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
         keys = pygame.key.get_pressed()
 
-        # Update player stun timer
+        # update player stun timer
         player.update_stun()
 
-        # Player actions
+        # player actions
         player.move(keys)
         player.apply_gravity()
         player.update_speed()
         player.update_throw()
 
-        # Update timer
+        # update timer
         elapsed_time = (now - start_time) // 1000
         time_left = max(0, timer - elapsed_time)
         
-        # Draw timer text in top-left corner of HUD
-        timer_text = HUD_FONT.render(f"TIME: {time_left}", True, (255, 255, 255))  # White text
-        timer_x = hud_x + 20  # 20px from left edge of HUD
-        timer_y = hud_y + 20  # 20px from top edge of HUD
+        timer_text = HUD_FONT.render(f"TIME: {time_left}", True, (255, 255, 255)) 
+        timer_x = hud_x + 20 
+        timer_y = hud_y + 20 
         WIN.blit(timer_text, (timer_x, timer_y))
 
-        # Throw food if Z pressed and allowed
+        # throw food if Z pressed
         if keys[pygame.K_z]:
             player.start_throw()
 
-        # Spawn food logic with warning sprite
+        # spawn food logic with warning sprite
         if current_food is None:
             if not food_warning_visible:
-                # Set warning position first, then show warning
-                food_warning_x = random.randint(0, WIDTH - 50)  # Account for warning sprite width
+                # set warning position first, then show warning
+                food_warning_x = random.randint(0, WIDTH - 50) 
                 food_warning_visible = True
-                food_spawn_time = now + 1000  # 1 second warning
+                food_spawn_time = now + 1000  # warning visible for 1 sec
             else:
                 if now >= food_spawn_time:
                     current_food = Food(path=None, calories=None)
-                    food_x = food_warning_x  # Use the same x position as warning
+                    food_x = food_warning_x  # use the same x position as warning
                     food_y = -50
                     food_warning_visible = False
         else:
-            # Move food down
+            # move food down
             food_y += food_speed
 
-            # Check catch
+            # check catch
             food_rect = pygame.Rect(food_x, food_y, 50, 50)
             player_rect = pygame.Rect(player.x, player.y, PLAYER_WIDTH, PLAYER_HEIGHT)
             if food_rect.colliderect(player_rect) and player.state == "normal":
-                # Add to stack if healthy
+                # add to stack if healthy
                 if current_food.is_healthy:
                     if len(player.food_stack) < MAX_FOOD_STACK:
                         player.food_stack.append(current_food)
                         player.update_speed()
                     else:
-                        # Stack full, food missed (turn into fireball)
+                        # stack full, food missed (turn into fireball)
                         fireballs.append(Fireball(food_x, GROUND_Y + 40, "left", is_obstacle=False))
                 else:   
-                    # Bad food hit player -> lose stack + stun
-                    # Only lose points if not already stunned
+                    # bad food hit player -> lose stack + stun
+                    # only lose points if not already stunned
                     if player.state != "stunned":
                         score = max(0, score - 25)
                     player.stun()
@@ -825,8 +884,23 @@ def main_menu():
     except pygame.error as e:
         print(f"Could not load menu music: {e}")
     
+    # Load cabbage dance GIFs (left and right)
+    cabbage_gif_left = GIFAnimation("new_sprites\\spr_tenna_dance_cabbage.gif", 300, 300)
+    cabbage_gif_right = GIFAnimation("new_sprites\\spr_tenna_dance_cabbage.gif", 300, 300)
+    
     while True:
         WIN.blit(BACKGROUND_IMG, (0, 0))
+        
+        # Update and draw cabbage dance GIFs (left and right)
+        cabbage_gif_left.update()
+        cabbage_gif_right.update()
+        cabbage_frame_left = cabbage_gif_left.get_current_frame()
+        cabbage_frame_right = cabbage_gif_right.get_current_frame()
+        if cabbage_frame_left:
+            WIN.blit(cabbage_frame_left, (100, HEIGHT//2 - 150))  # Left side of screen
+        if cabbage_frame_right:
+            WIN.blit(cabbage_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  # Right side of screen
+        
         draw_text_centered(WIN, "Catch the Healthy Food", MENU_FONT, (255, 255, 255), 100)
 
         # Create semi-transparent black square for menu options
@@ -881,4 +955,3 @@ def main_menu():
 
 if __name__ == "__main__":
     main_menu()
-
