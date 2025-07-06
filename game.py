@@ -372,9 +372,24 @@ class ThrownFood:
 # All game parts (menu, game, controls, about, leaderboard) ---------------------------------------------
 # instructions screen 
 def show_instructions():
+    # Load cabbage dance GIFs (left and right)
+    cabbage_gif_left = GIFAnimation("new_sprites\\spr_tenna_dance_cabbage.gif", 300, 300)
+    cabbage_gif_right = GIFAnimation("new_sprites\\spr_tenna_dance_cabbage.gif", 300, 300)
+    
     running = True
     while running:
         WIN.blit(BACKGROUND_IMG, (0, 0))
+        
+        # Update and draw cabbage dance GIFs (left and right)
+        cabbage_gif_left.update()
+        cabbage_gif_right.update()
+        cabbage_frame_left = cabbage_gif_left.get_current_frame()
+        cabbage_frame_right = cabbage_gif_right.get_current_frame()
+        if cabbage_frame_left:
+            WIN.blit(cabbage_frame_left, (100, HEIGHT//2 - 150))  # Left side of screen
+        if cabbage_frame_right:
+            WIN.blit(cabbage_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  # Right side of screen
+        
         draw_text_centered(WIN, "Instructions", MENU_FONT, (255, 255, 255), 100)
         draw_text_centered(WIN, "Move using arrow keys: ← → ", FONT, (255, 255, 255), 200)
         draw_text_centered(WIN, "Press X to jump", FONT, (255, 255, 255), 250)
@@ -901,7 +916,7 @@ def main_menu():
         if cabbage_frame_right:
             WIN.blit(cabbage_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  # Right side of screen
         
-        draw_text_centered(WIN, "Catch the Healthy Food", MENU_FONT, (255, 255, 255), 100)
+        draw_text_centered(WIN, "Deltarune if it was peak", MENU_FONT, (255, 255, 255), 100)
 
         # Create semi-transparent black square for menu options
         menu_rect = pygame.Rect(WIDTH//2 - 150, HEIGHT//2 - 50, 300, 300)
