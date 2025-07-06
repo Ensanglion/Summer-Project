@@ -6,7 +6,7 @@ import pandas as pd
 from linear_regression import *
 
 # List of image paths
-IMAGE_PATHS = [f"sometimes food/img{i}.jpg" for i in range(10)]
+IMAGE_PATHS = [f"sometimes_food/img{i}.png" for i in range(10)]
 
 class Food:
     def __init__(self, path, calories, predicted_fat=None, is_healthy=None):
