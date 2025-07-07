@@ -440,10 +440,10 @@ def show_about():
         first_line_text = "The game has different kinds of food with random calories assigned. Using a dataset of foods, we found a linear relation:"
         first_line_rendered = FONT.render(first_line_text, True, (0, 0, 0))
         WIN.blit(first_line_rendered, (first_line_x - first_line_rendered.get_width()//2, 150))
-        draw_left_text("", FONT, (0, 0, 0), 180)  # Spacing
+        draw_left_text("", FONT, (0, 0, 0), 180)
         draw_left_text("Linear relation equation:", FONT, (0, 0, 0), 210)
         draw_left_text("Total Fat (g) = 0.0448 × Energy (kCal) - 2.1217", FONT, (0, 0, 0), 240)
-        draw_left_text("", FONT, (0, 0, 0), 270)  # Spacing
+        draw_left_text("", FONT, (0, 0, 0), 270)  
         draw_left_text("Healthy food is defined as food with less than 20g of fat.", FONT, (0, 0, 0), 300)    
         # last 2 lines are bolded and closer to the left side, split around "and" to avoid background
         last_line1_part1 = "Your goal is to catch healthy food,"
@@ -933,6 +933,7 @@ def main_menu():
             if text_rect.collidepoint(mouse_pos):
                 # Highlight the text when hovering
                 pygame.draw.rect(WIN, (255, 255, 255, 50), text_rect.inflate(20, 10))
+                text_surface = FONT.render(option_text, True, (0, 0, 0))  # Change text color to black
                 if mouse_click[0]:  # Left click
                     pygame.time.delay(200)
                     if option_text == "Play":
