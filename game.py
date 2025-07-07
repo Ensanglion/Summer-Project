@@ -119,31 +119,31 @@ class GIFAnimation:
     def __init__(self, gif_path, target_width, target_height):
         self.frames = []
         self.current_frame = 0
-        self.frame_delay = 12  # milliseconds between frames (20 FPS - much faster!)
+        self.frame_delay = 12  # milliseconds between frames (20 FPS)
         self.last_frame_time = 0
         
         try:
-            # Open the GIF and extract frames
+            # open the gif and extract frames
             gif = Image.open(gif_path)
             frame_count = 0
             
             while True:
-                # Convert PIL image to pygame surface
+                # convert PIL image to pygame surface
                 frame_surface = pygame.image.fromstring(gif.convert('RGBA').tobytes(), gif.size, 'RGBA')
                 
-                # Scale the frame to target size
+                # scale the frame to target size
                 scaled_frame = pygame.transform.scale(frame_surface, (target_width, target_height))
                 self.frames.append(scaled_frame)
                 
                 frame_count += 1
                 gif.seek(frame_count)
         except EOFError:
-            pass  # End of GIF
+            pass  # end of gif
         except Exception as e:
             print(f"Error loading GIF {gif_path}: {e}")
-            # Create a fallback surface
+            # create a fallback surface
             fallback = pygame.Surface((target_width, target_height), pygame.SRCALPHA)
-            fallback.fill((255, 0, 255))  # Magenta for missing GIF
+            fallback.fill((255, 0, 255))
             self.frames.append(fallback)
     
     def update(self):
@@ -606,7 +606,6 @@ def show_leaderboard():
 # actual game loop
 def run_game():
     clock = pygame.time.Clock()
-    # play background music
     try:
         pygame.mixer.music.load("game_active.mp3")
         pygame.mixer.music.play(-1) 
@@ -777,21 +776,21 @@ def run_game():
                     side = obstacle_warning_side
                     y_pos = GROUND_Y + 40
                     if side == "left":
-                        x_pos = -40  # Spawn off left edge
-                        direction = "right"  # Move right
+                        x_pos = -40  # spawn off left edge
+                        direction = "right"  # move right
                     else:
-                        x_pos = WIDTH  # Spawn off right edge  
-                        direction = "left"  # Move left
+                        x_pos = WIDTH  # spawn off right edge  
+                        direction = "left"  # move left
                     obstacle_fireballs.append(ObstacleFireball(x_pos, y_pos, direction))
                     print(f"Spawned obstacle fireball at ({x_pos}, {y_pos}) moving {direction}")  # Debug
                     obstacle_warning_visible = False
                     last_fireball_spawn = now
 
-        # Update and draw fireballs
+        # update fireballs
         for f in fireballs[:]:
             f.update()
             f.draw(WIN)
-            # Check collision with player
+            # check collision with player
             player_rect = pygame.Rect(player.x, player.y, PLAYER_WIDTH, PLAYER_HEIGHT)
             if f.hitbox.colliderect(player_rect):
                 # Player hit by fireball - stun, lose stack, and lose points
@@ -800,11 +799,10 @@ def run_game():
                     score = max(0, score - 25)
                 player.stun()
                 fireballs.remove(f)
-            # Remove fireballs that are no longer alive
             elif not f.alive:
                 fireballs.remove(f)
 
-        # Update and draw obstacle fireballs
+        # update obstacle fireballs
         for of in obstacle_fireballs[:]:
             of.update()
             of.draw(WIN)
@@ -817,17 +815,15 @@ def run_game():
                     score = max(0, score - 25)
                 player.stun()
                 obstacle_fireballs.remove(of)
-            # Remove obstacle fireballs that are no longer alive
             elif not of.alive:
                 obstacle_fireballs.remove(of)
 
-        # Throw food mechanic: when player enters throwing state, launch food
         if player.state == "throwing" and player.food_stack and not player.threw_this_cycle:
             # Launch all food in stack at once
             stack_size = len(player.food_stack)
             for i, food_to_throw in enumerate(player.food_stack[:]):
-                # Spread the food items horizontally so they don't overlap
-                x_offset = (i - stack_size//2) * 20  # 20px spacing between items
+                # Spread the food items horizontally so they don't overlap (also makes hitting customers easier)
+                x_offset = (i - stack_size//2) * 20 
                 thrown_foods.append(ThrownFood(food_to_throw, player.x + PLAYER_WIDTH//2 - 25 + x_offset, player.y))
             
             # Clear the stack after throwing
@@ -839,7 +835,6 @@ def run_game():
         for tf in thrown_foods[:]:
             tf.update()
             tf.draw(WIN)
-            # Check collision with customers
             tf_rect = pygame.Rect(tf.x, tf.y, tf.width, tf.height)
             hit_customer = None
             for c in customers:
@@ -847,34 +842,32 @@ def run_game():
                     hit_customer = c
                     break
             if hit_customer:
-                # Calculate points based on total thrown food count
+                # calculate points based on total thrown food count
                 total_thrown = len(thrown_foods)
                 if total_thrown == 1:
-                    points = 20
+                    points = 10
                 elif total_thrown == 2:
                     points = 30
                 elif total_thrown == 3:
                     points = 50
                 elif total_thrown == 4:
-                    points = 70
+                    points = 75
                 elif total_thrown >= 5:
                     points = 100
                 else:
                     points = total_thrown * 20
                 
                 score += points
-                # Remove all thrown food items and the hit customer
+                # remove all thrown food items and the hit customer
                 thrown_foods.clear()
                 customers.remove(hit_customer)
-                break  # Exit the loop since we've handled the collision
+                break 
 
             if not tf.alive:
                 thrown_foods.remove(tf)
 
-        # Draw player stack (food images above player)
         for i, food in enumerate(player.food_stack):
             img = pygame.image.load(food.path)
-            # Stack food above player's head, 10px apart
             WIN.blit(pygame.transform.scale(img, (40, 40)), (player.x + PLAYER_WIDTH//2 - 20, player.y - (i + 1)*45))
 
         # Draw player
@@ -885,43 +878,39 @@ def run_game():
         # Game over condition
         if time_left <= 0:
             running = False
-            # Show game over screen and get player name
+            # show game over screen and get player name
             show_game_over_screen(score)
-            return  # Return to main menu instead of quitting
+            return  # return to main menu instead of quitting
 
     pygame.quit()
 
 def main_menu():
-    # Load and play menu music
     try:
         pygame.mixer.music.load("silly_menu.mp3")
-        pygame.mixer.music.play(-1)  # -1 means loop indefinitely
+        pygame.mixer.music.play(-1) 
     except pygame.error as e:
         print(f"Could not load menu music: {e}")
     
-    # Load cabbage dance GIFs (left and right)
     cabbage_gif_left = GIFAnimation("new_sprites\\spr_tenna_dance_cabbage.gif", 300, 300)
     cabbage_gif_right = GIFAnimation("new_sprites\\spr_tenna_dance_cabbage.gif", 300, 300)
     
     while True:
         WIN.blit(BACKGROUND_IMG, (0, 0))
         
-        # Update and draw cabbage dance GIFs (left and right)
         cabbage_gif_left.update()
         cabbage_gif_right.update()
         cabbage_frame_left = cabbage_gif_left.get_current_frame()
         cabbage_frame_right = cabbage_gif_right.get_current_frame()
         if cabbage_frame_left:
-            WIN.blit(cabbage_frame_left, (100, HEIGHT//2 - 150))  # Left side of screen
+            WIN.blit(cabbage_frame_left, (100, HEIGHT//2 - 150)) 
         if cabbage_frame_right:
-            WIN.blit(cabbage_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  # Right side of screen
+            WIN.blit(cabbage_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  
         
         draw_text_centered(WIN, "Deltarune if it was peak", MENU_FONT, (255, 255, 255), 100)
 
-        # Create semi-transparent black square for menu options
         menu_rect = pygame.Rect(WIDTH//2 - 150, HEIGHT//2 - 50, 300, 300)
         menu_surface = pygame.Surface((300, 300), pygame.SRCALPHA)
-        pygame.draw.rect(menu_surface, (0, 0, 0, 128), (0, 0, 300, 300))  # Semi-transparent black
+        pygame.draw.rect(menu_surface, (0, 0, 0, 128), (0, 0, 300, 300)) 
         WIN.blit(menu_surface, menu_rect)
 
         mouse_pos = pygame.mouse.get_pos()
