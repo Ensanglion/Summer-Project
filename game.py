@@ -87,7 +87,7 @@ SCOREBOARD_SPRITE = pygame.transform.scale(
 
 
 # Constants
-GROUND_Y = HEIGHT - PLAYER_HEIGHT - 250
+GROUND_Y = (HEIGHT//20)*11
 PLAYER_START_X = WIDTH // 2
 MAX_FOOD_STACK = 5
 STUN_DURATION = 1
@@ -182,11 +182,11 @@ class Player:
         if self.state in ["hit", "stunned", "throw_start", "throwing"]:
             return
         moving = False
-        if keys[pygame.K_LEFT] and self.x > 0:
+        if keys[pygame.K_LEFT] and self.x > WIDTH//4:
             self.x -= self.speed
             self.direction = "left"
             moving = True
-        if keys[pygame.K_RIGHT] and self.x < WIDTH - PLAYER_WIDTH:
+        if keys[pygame.K_RIGHT] and self.x < (WIDTH//4)*3 - PLAYER_WIDTH:
             self.x += self.speed
             self.direction = "right"
             moving = True
@@ -252,7 +252,7 @@ class Player:
 class Customer:
     def __init__(self):
         # slightly below player ground line
-        self.y = GROUND_Y + 200  
+        self.y = GROUND_Y + (HEIGHT//20)*4  
         # spawn off-screen
         self.x = WIDTH + 50  
         self.speed = 3
@@ -694,7 +694,7 @@ def run_game():
         if current_food is None:
             if not food_warning_visible:
                 # set warning position first, then show warning
-                food_warning_x = random.randint(0, WIDTH - 50) 
+                food_warning_x = random.randint(WIDTH//4, (WIDTH//4) * 3) 
                 food_warning_visible = True
                 food_spawn_time = now + 1000  # warning visible for 1 sec
             else:
@@ -728,9 +728,9 @@ def run_game():
                 current_food = None
 
             # Check if food hits the ground
-            if food_y >= GROUND_Y:
+            if food_y >= GROUND_Y + (HEIGHT//20)*2:
                 # Food hit the ground -> turn into fireball
-                fireballs.append(Fireball(food_x, GROUND_Y + 40, "left", is_obstacle=False))
+                fireballs.append(Fireball(food_x, GROUND_Y + (HEIGHT//20)*2, "left", is_obstacle=False))
                 current_food = None
 
         # Draw food warning if visible
@@ -774,7 +774,7 @@ def run_game():
                 if now >= obstacle_warning_time:
                     # Spawn the obstacle fireball
                     side = obstacle_warning_side
-                    y_pos = GROUND_Y + 40
+                    y_pos = GROUND_Y + (HEIGHT//20)*2
                     if side == "left":
                         x_pos = -40  # spawn off left edge
                         direction = "right"  # move right

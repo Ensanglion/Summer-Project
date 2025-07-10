@@ -11,7 +11,14 @@ IMAGE_PATHS = [f"sometimes_food/img{i}.png" for i in range(10)]
 class Food:
     def __init__(self, path, calories, predicted_fat=None, is_healthy=None):
         self.path = path if path is not None else random.choice(IMAGE_PATHS)
-        self.calories = calories if calories is not None else random.randint(100, 700)
+        if calories is not None:
+            self.calories = calories
+        else:
+            if random.randint(1, 3) == 3:
+                self.calories = random.randint(500, 700)
+            else:
+                self.calories = random.randint(100, 499)
+
         
         # Load model and predict fat content
         model = load_model()
