@@ -12,7 +12,7 @@ pygame.mixer.init()  # enables sound
 screen_info = pygame.display.Info() # player's screen size
 WIDTH, HEIGHT = screen_info.current_w, screen_info.current_h
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Catch the Healthy Food")
+pygame.display.set_caption("Summer Project")
 
 FPS = 60
 FONT = pygame.font.SysFont("arial", 24)
@@ -68,13 +68,13 @@ CUSTOMER_SPRITES = [
     load_and_scale_sprite("new_sprites\\spr_shadowman_run3\\spr_shadowman_run3_0.png", 100, 120),
 ]
 
-# Fireball sprite and dimnensions
+# Fireball sprite
 FIREBALL_SPRITE = load_and_scale_sprite(
     "new_sprites\\spr_kitchen_fire_ball\\spr_kitchen_fire_ball_1.png",
     40, 40
 )
 
-# Food warning sprite and dimensions
+# Food warning sprite
 FOOD_WARNING_SPRITE = pygame.transform.scale(
     pygame.image.load("new_sprites\\spr_chefs_foodnotice\\spr_chefs_foodnotice_0.png"),
     (50, 50) 
@@ -119,7 +119,7 @@ class GIFAnimation:
     def __init__(self, gif_path, target_width, target_height):
         self.frames = []
         self.current_frame = 0
-        self.frame_delay = 12  # milliseconds between frames (20 FPS)
+        self.frame_delay = 12
         self.last_frame_time = 0
         
         try:
@@ -215,7 +215,7 @@ class Player:
             self.state = "throwing"
         elif self.state == "throwing" and now - self.throw_anim_time > 300:
             self.state = "normal"
-            self.threw_this_cycle = False  # Reset flag when throwing ends
+            self.threw_this_cycle = False
 
     # switches between sprites based on the player's state
     def get_current_sprite(self):
@@ -251,9 +251,7 @@ class Player:
 
 class Customer:
     def __init__(self):
-        # slightly below player ground line
         self.y = GROUND_Y + (HEIGHT//20)*4  
-        # spawn off-screen
         self.x = WIDTH + 50  
         self.speed = 3
         self.sprite_index = 0
@@ -283,7 +281,7 @@ class Fireball:
     def __init__(self, x, y, direction, is_obstacle=True):
         self.x = x
         self.y = y
-        self.speed = 4  # Slower speed for obstacle fireballs
+        self.speed = 4
         self.direction = direction  # either "left" or "right"
         self.width = 40
         self.height = 40
@@ -291,7 +289,7 @@ class Fireball:
         self.alive = True
         self.spawn_time = pygame.time.get_ticks()
         self.is_obstacle = is_obstacle
-        self.visible = True  # For blinking effect
+        self.visible = True
 
     def update(self):
         if self.is_obstacle:
@@ -306,7 +304,7 @@ class Fireball:
             if self.x < -self.width or self.x > WIDTH + self.width:
                 self.alive = False
         else:
-            # Static penalty fireballs - stay in place for 2 seconds with blinking
+            # Static penalty fireballs
             self.hitbox.topleft = (self.x, self.y)
             current_time = pygame.time.get_ticks()
             time_alive = current_time - self.spawn_time
@@ -327,7 +325,7 @@ class ObstacleFireball:
         self.x = x
         self.y = y
         self.speed = 3
-        self.direction = direction  # randomly chooses either "left" or "right"
+        self.direction = direction  # either "left" or "right"
         self.width = 40
         self.height = 40
         self.hitbox = pygame.Rect(self.x + 10, self.y + 10, 20, 20)
@@ -372,7 +370,7 @@ class ThrownFood:
 # All game parts (menu, game, controls, about, leaderboard) ---------------------------------------------
 # instructions screen 
 def show_instructions():
-    # Load cabbage dance GIFs (left and right)
+    # Load dance gifs (left and right)
     cabbage_gif_left = GIFAnimation("new_sprites\\spr_tenna_dance_cabbage.gif", 300, 300)
     cabbage_gif_right = GIFAnimation("new_sprites\\spr_tenna_dance_cabbage.gif", 300, 300)
     
@@ -380,15 +378,15 @@ def show_instructions():
     while running:
         WIN.blit(BACKGROUND_IMG, (0, 0))
         
-        # Update and draw cabbage dance GIFs (left and right)
+        # display gifs
         cabbage_gif_left.update()
         cabbage_gif_right.update()
         cabbage_frame_left = cabbage_gif_left.get_current_frame()
         cabbage_frame_right = cabbage_gif_right.get_current_frame()
         if cabbage_frame_left:
-            WIN.blit(cabbage_frame_left, (100, HEIGHT//2 - 150))  # Left side of screen
+            WIN.blit(cabbage_frame_left, (100, HEIGHT//2 - 150))
         if cabbage_frame_right:
-            WIN.blit(cabbage_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  # Right side of screen
+            WIN.blit(cabbage_frame_right, (WIDTH - 400, HEIGHT//2 - 150))
         
         draw_text_centered(WIN, "Instructions", MENU_FONT, (255, 255, 255), 100)
         draw_text_centered(WIN, "Move using arrow keys: ← → ", FONT, (255, 255, 255), 200)
@@ -429,11 +427,6 @@ def show_about():
             rendered = font.render(text, True, color)
             WIN.blit(rendered, (left_text_x - rendered.get_width()//2, y))
         
-        def draw_left_text_bold(text, font, color, y):
-            bold_font = pygame.font.SysFont("arial", 24, bold=True)
-            rendered = bold_font.render(text, True, color)
-            WIN.blit(rendered, (left_text_x - rendered.get_width()//2, y))
-        
         # Text content on the left
         first_line_x = WIDTH * 0.45  # first line is further to the right to align with the image better
         last_lines_x = WIDTH * 0.225 # last lines closer to the left side
@@ -445,7 +438,7 @@ def show_about():
         draw_left_text("Total Fat (g) = 0.0448 × Energy (kCal) - 2.1217", FONT, (0, 0, 0), 240)
         draw_left_text("", FONT, (0, 0, 0), 270)  
         draw_left_text("Healthy food is defined as food with less than 20g of fat.", FONT, (0, 0, 0), 300)    
-        # last 2 lines are bolded and closer to the left side, split around "and" to avoid background
+        # last 2 lines are bolded and closer to the left side, split around "and" to align better with the background image
         last_line1_part1 = "Your goal is to catch healthy food,"
         last_line1_part2 = "then throw it at the customers"
         last_line2_text = "Avoid unhealthy food and fireballs!"   
@@ -506,7 +499,6 @@ def show_game_over_screen(final_score):
                 if event.key == pygame.K_RETURN and player_name.strip():
                     save_score_to_leaderboard(player_name.strip(), final_score)
                     running = False
-                    # Change music back to menu theme
                     try:
                         pygame.mixer.music.load("silly_menu.mp3")
                         pygame.mixer.music.play(-1)
@@ -525,10 +517,9 @@ def save_score_to_leaderboard(name, score):
         try:
             with open("leaderboard.csv", newline='', mode='r') as file:
                 reader = csv.reader(file)
-                # Skip header row 
+                # skip header row 
                 header = next(reader, None)
-                if header and header[0] == "Name":
-                    
+                if header and header[0] == "Name":   
                     scores = list(reader)
                 else: # for debug purposes, in case the file doesn't have a header
                     if header:
@@ -537,7 +528,7 @@ def save_score_to_leaderboard(name, score):
         except FileNotFoundError:
             pass
         
-        # Add new score
+        # add new score
         scores.append([name, str(score)])
         
         # Sort by score (descending) and keep top 5
@@ -568,7 +559,7 @@ def show_leaderboard():
     except FileNotFoundError:
         pass
 
-    # Load cane dance GIFs (left and right)
+    # load other dance gifs
     cane_gif_left = GIFAnimation("new_sprites\\spr_tenna_dance_cane.gif", 300, 300)
     cane_gif_right = GIFAnimation("new_sprites\\spr_tenna_dance_cane.gif", 300, 300)
 
@@ -576,15 +567,15 @@ def show_leaderboard():
     while running:
         WIN.blit(BACKGROUND_IMG, (0, 0))
         
-        # Update and draw cane dance GIFs (left and right)
+        # update gifs
         cane_gif_left.update()
         cane_gif_right.update()
         cane_frame_left = cane_gif_left.get_current_frame()
         cane_frame_right = cane_gif_right.get_current_frame()
         if cane_frame_left:
-            WIN.blit(cane_frame_left, (100, HEIGHT//2 - 150))  # Left side of screen
+            WIN.blit(cane_frame_left, (100, HEIGHT//2 - 150))
         if cane_frame_right:
-            WIN.blit(cane_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  # Right side of screen
+            WIN.blit(cane_frame_right, (WIDTH - 400, HEIGHT//2 - 150))
         draw_text_centered(WIN, "Leaderboard", MENU_FONT, (255, 255, 255), 80)
         
         if scores:
@@ -603,7 +594,7 @@ def show_leaderboard():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
 
-# actual game loop
+# actual main game loop
 def run_game():
     clock = pygame.time.Clock()
     try:
@@ -727,62 +718,59 @@ def run_game():
                     player.stun()
                 current_food = None
 
-            # Check if food hits the ground
+            # check if food hits the ground
             if food_y >= GROUND_Y + (HEIGHT//20)*2:
-                # Food hit the ground -> turn into fireball
+                # food hit the ground -> turn into fireball
                 fireballs.append(Fireball(food_x, GROUND_Y + (HEIGHT//20)*2, "left", is_obstacle=False))
                 current_food = None
 
-        # Draw food warning if visible
+        # display food warning if visible is set to true
         if food_warning_visible:
             WIN.blit(FOOD_WARNING_SPRITE, (food_warning_x, 50))
 
-        # Draw obstacle warning if visible
+        # display obstacle warning if visible is set to true
         if obstacle_warning_visible:
             if obstacle_warning_side == "left":
-                WIN.blit(FOOD_WARNING_SPRITE, (20, GROUND_Y + 20))  # Left side warning
+                WIN.blit(FOOD_WARNING_SPRITE, (20, GROUND_Y + 20))
             else:
-                WIN.blit(FOOD_WARNING_SPRITE, (WIDTH - 100, GROUND_Y + 20))  # Right side warning
+                WIN.blit(FOOD_WARNING_SPRITE, (WIDTH - 100, GROUND_Y + 20))
 
-        # Draw current food
         if current_food:
             food_img = pygame.image.load(current_food.path)
             WIN.blit(pygame.transform.scale(food_img, (50, 50)), (food_x, food_y))
             calorie_text = FONT.render(f"{int(current_food.calories)} calories", True, (0, 0, 0))
             WIN.blit(calorie_text, (food_x + 5, food_y - 25))
 
-        # Spawn customers every CUSTOMER_SPAWN_INTERVAL
+        # spawn customers every CUSTOMER_SPAWN_INTERVAL
         if now - last_customer_spawn > CUSTOMER_SPAWN_INTERVAL:
             customers.append(Customer())
             last_customer_spawn = now
 
-        # Update and draw customers
         for c in customers[:]:
             c.update()
             c.draw(WIN)
             if not c.alive:
                 customers.remove(c)
 
-        # Spawn obstacle fireballs every FIREBALL_SPAWN_INTERVAL
+        # spawn obstacle fireballs every FIREBALL_SPAWN_INTERVAL
         if now - last_fireball_spawn > FIREBALL_SPAWN_INTERVAL:
             if not obstacle_warning_visible:
-                # Show warning first
                 obstacle_warning_side = random.choice(["left", "right"])
                 obstacle_warning_visible = True
                 obstacle_warning_time = now + 1000  # 1 second warning
             else:
                 if now >= obstacle_warning_time:
-                    # Spawn the obstacle fireball
+                    # spawn the obstacle fireball
                     side = obstacle_warning_side
                     y_pos = GROUND_Y + (HEIGHT//20)*2
                     if side == "left":
-                        x_pos = -40  # spawn off left edge
-                        direction = "right"  # move right
+                        x_pos = -40  # spawn on the left edge
+                        direction = "right"
                     else:
-                        x_pos = WIDTH  # spawn off right edge  
-                        direction = "left"  # move left
+                        x_pos = WIDTH  # spawn on the right edge  
+                        direction = "left"
                     obstacle_fireballs.append(ObstacleFireball(x_pos, y_pos, direction))
-                    print(f"Spawned obstacle fireball at ({x_pos}, {y_pos}) moving {direction}")  # Debug
+                    print(f"Spawned obstacle fireball at ({x_pos}, {y_pos}) moving {direction}")  # debug print
                     obstacle_warning_visible = False
                     last_fireball_spawn = now
 
@@ -793,8 +781,8 @@ def run_game():
             # check collision with player
             player_rect = pygame.Rect(player.x, player.y, PLAYER_WIDTH, PLAYER_HEIGHT)
             if f.hitbox.colliderect(player_rect):
-                # Player hit by fireball - stun, lose stack, and lose points
-                # Only lose points if not already stunned
+                # player hit by fireball -> stun, lose stack, and lose points
+                # only lose points if not already stunned
                 if player.state != "stunned":
                     score = max(0, score - 25)
                 player.stun()
@@ -806,11 +794,11 @@ def run_game():
         for of in obstacle_fireballs[:]:
             of.update()
             of.draw(WIN)
-            # Check collision with player
+            # check collision with player
             player_rect = pygame.Rect(player.x, player.y, PLAYER_WIDTH, PLAYER_HEIGHT)
             if of.hitbox.colliderect(player_rect):
-                # Player hit by obstacle fireball - stun, lose stack, and lose points
-                # Only lose points if not already stunned
+                # player hit by obstacle fireball - stun, lose stack, and lose points
+                # only lose points if not already stunned
                 if player.state != "stunned":
                     score = max(0, score - 25)
                 player.stun()
@@ -819,19 +807,19 @@ def run_game():
                 obstacle_fireballs.remove(of)
 
         if player.state == "throwing" and player.food_stack and not player.threw_this_cycle:
-            # Launch all food in stack at once
+            # throw all the food in the stack
             stack_size = len(player.food_stack)
             for i, food_to_throw in enumerate(player.food_stack[:]):
-                # Spread the food items horizontally so they don't overlap (also makes hitting customers easier)
+                # spread the food items horizontally so they don't overlap (also makes hitting customers easier (it's not a bug, it's a feature))
                 x_offset = (i - stack_size//2) * 20 
                 thrown_foods.append(ThrownFood(food_to_throw, player.x + PLAYER_WIDTH//2 - 25 + x_offset, player.y))
             
-            # Clear the stack after throwing
+            # clear the stack after throwing
             player.food_stack.clear()
             player.threw_this_cycle = True
             player.update_speed()
 
-        # Update thrown food
+        # update thrown food
         for tf in thrown_foods[:]:
             tf.update()
             tf.draw(WIN)
@@ -858,7 +846,6 @@ def run_game():
                     points = total_thrown * 20
                 
                 score += points
-                # remove all thrown food items and the hit customer
                 thrown_foods.clear()
                 customers.remove(hit_customer)
                 break 
@@ -870,17 +857,17 @@ def run_game():
             img = pygame.image.load(food.path)
             WIN.blit(pygame.transform.scale(img, (40, 40)), (player.x + PLAYER_WIDTH//2 - 20, player.y - (i + 1)*45))
 
-        # Draw player
+        # display player
         WIN.blit(player.get_current_sprite(), (player.x, player.y))
 
         pygame.display.update()
 
-        # Game over condition
+        # game over condition
         if time_left <= 0:
             running = False
             # show game over screen and get player name
             show_game_over_screen(score)
-            return  # return to main menu instead of quitting
+            return  # return to main menu
 
     pygame.quit()
 
@@ -906,7 +893,7 @@ def main_menu():
         if cabbage_frame_right:
             WIN.blit(cabbage_frame_right, (WIDTH - 400, HEIGHT//2 - 150))  
         
-        draw_text_centered(WIN, "Deltarune if it was peak", MENU_FONT, (255, 255, 255), 100)
+        draw_text_centered(WIN, "Deltarune If It Was Peak", MENU_FONT, (255, 255, 255), 100)
 
         menu_rect = pygame.Rect(WIDTH//2 - 150, HEIGHT//2 - 50, 300, 300)
         menu_surface = pygame.Surface((300, 300), pygame.SRCALPHA)
@@ -916,7 +903,7 @@ def main_menu():
         mouse_pos = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()
 
-        # Menu options positioned within the semi-transparent square
+        # menu options
         options = [
             ("Play", HEIGHT//2 - 20),
             ("Instructions", HEIGHT//2 + 30),
@@ -929,12 +916,11 @@ def main_menu():
             text_surface = FONT.render(option_text, True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=(WIDTH//2, y_pos))
             
-            # Check if mouse is hovering over this option
             if text_rect.collidepoint(mouse_pos):
-                # Highlight the text when hovering
+                # highlight the text when hovering
                 pygame.draw.rect(WIN, (255, 255, 255, 50), text_rect.inflate(20, 10))
-                text_surface = FONT.render(option_text, True, (0, 0, 0))  # Change text color to black
-                if mouse_click[0]:  # Left click
+                text_surface = FONT.render(option_text, True, (0, 0, 0))  # change text color to black
+                if mouse_click[0]:
                     pygame.time.delay(200)
                     if option_text == "Play":
                         run_game()
