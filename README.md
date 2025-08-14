@@ -4,11 +4,11 @@
 
 ## Installation
 
-### Using Virtual Environment (Recommended)
+### Using Virtual Environment
 
-1. **Clone or download this project** to your local machine
+1. **Clone/Download the project to a new folder**
 
-2. **Open a terminal/command prompt** in the project directory
+2. **Open a terminal in the project directory**
 
 3. **Create a virtual environment:**
    ```
